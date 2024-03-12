@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -11,14 +12,19 @@ public class MainManager : MonoBehaviour
     public Rigidbody Ball;
 
     public Text ScoreText;
+    public Text ScoreText2;
     public GameObject GameOverText;
     
+
     private bool m_Started = false;
     private int m_Points;
     
     private bool m_GameOver = false;
 
-    
+    public User highScore;
+
+
+  
     // Start is called before the first frame update
     void Start()
     {
@@ -36,6 +42,10 @@ public class MainManager : MonoBehaviour
                 brick.onDestroyed.AddListener(AddPoint);
             }
         }
+
+        LoadUser();
+
+        ScoreText2.text = $"Best Score {highScore.score} from {highScore.name}";
     }
 
     private void Update()
@@ -57,7 +67,7 @@ public class MainManager : MonoBehaviour
         {
             if (Input.GetKeyDown(KeyCode.Space))
             {
-                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex - 1);
             }
         }
     }
@@ -70,7 +80,43 @@ public class MainManager : MonoBehaviour
 
     public void GameOver()
     {
+        SaveUser();
         m_GameOver = true;
         GameOverText.SetActive(true);
     }
+
+
+    public void LoadUser()
+    {
+        if(File.Exists(Application.persistentDataPath + "/highscore.json"))
+        {
+            string loadData = File.ReadAllText(Application.persistentDataPath + "/highscore.json");
+
+            highScore = JsonUtility.FromJson<User>(loadData);
+        }
+    }
+
+    public void SaveUser()
+    {
+        User user = new User();
+
+        user.name = Use.Instance.userName;
+        user.score = m_Points;
+
+        if (user.score > highScore.score)
+        {
+            var json =  JsonUtility.ToJson(user);
+
+            File.WriteAllText(Application.persistentDataPath + "/highscore.json", json);
+        }
+    }
+
+}
+
+
+[System.Serializable]
+public struct User
+{
+    public string name; 
+    public int score;
 }
